@@ -7,21 +7,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.app.service.DocumentIngestionService;
 import com.app.service.OllamaService;
 
 @RestController
 @RequestMapping("/api/v1")
 public class DocumentUploadController {
 
-	private OllamaService ragService;
+	private DocumentIngestionService ingestionService;
 	
-	public DocumentUploadController(OllamaService ragService) {
-		this.ragService=ragService;
+	public DocumentUploadController(DocumentIngestionService ingestionService) {
+		
+		this.ingestionService=ingestionService;
 	}
 	
 	@PostMapping("/upload")
 	public ResponseEntity<String> uploadPdf(@RequestParam("file") MultipartFile file) {
-		ragService.processAndStorepdf(file);
+		ingestionService.processAndStorepdf(file);
 		return ResponseEntity.ok().body("PDF uploaded successfully");
 	}
 	

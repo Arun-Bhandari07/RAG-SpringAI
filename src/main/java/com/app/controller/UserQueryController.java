@@ -18,16 +18,16 @@ public class UserQueryController {
 
 	private final OllamaService ollamaService;
 	private final GeminiService geminiService;
-	
+
 	public UserQueryController(OllamaService ollamaService
-			,GeminiService aiService) {
+			,GeminiService geminiService) {
 		this.ollamaService = ollamaService;
-		this.geminiService= aiService;
+		this.geminiService= geminiService;
 	}
-	
-	@PostMapping(value="", produces=MediaType.TEXT_EVENT_STREAM_VALUE)
+
+	@PostMapping(value = "", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<String> askQuestion(@RequestBody @NotBlank String question) {
-		return  geminiService.askWithGemini(question);
-		
+		return geminiService.askQuestion(question);
+
 	}
 }
