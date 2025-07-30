@@ -1,10 +1,6 @@
-package com.app.service.exception;
+package com.app.exception;
 
 public class DocumentProcessingException extends RuntimeException{
-
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public DocumentProcessingException(String message) {

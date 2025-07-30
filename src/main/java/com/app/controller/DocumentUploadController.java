@@ -7,15 +7,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.app.service.RagService;
+import com.app.service.OllamaService;
 
 @RestController
 @RequestMapping("/api/v1")
-public class RagController {
+public class DocumentUploadController {
 
-	private RagService ragService;
+	private OllamaService ragService;
 	
-	public RagController(RagService ragService) {
+	public DocumentUploadController(OllamaService ragService) {
 		this.ragService=ragService;
 	}
 	

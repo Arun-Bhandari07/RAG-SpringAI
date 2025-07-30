@@ -15,7 +15,9 @@ build/
 .sts4-cache
 *.properties
 *.yaml
-src/main/resources/pdf
+*.pdf
+*.properties
+
 
 bin/
 !**/src/main/**/bin/
