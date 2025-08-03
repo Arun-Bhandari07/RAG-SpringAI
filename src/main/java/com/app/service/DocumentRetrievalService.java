@@ -11,8 +11,6 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
-
-
 @Service
 public class DocumentRetrievalService {
 	private static final Logger logger = LoggerFactory.getLogger(DocumentRetrievalService.class);
@@ -30,7 +28,7 @@ public class DocumentRetrievalService {
 	 */
 	public Prompt retrieveContent(String userPrompt) {
 		List<Document> retrievedDocs = vectorStore.similaritySearch(userPrompt);
-		logger.info("Found {} number of similar document on similarity Search",retrievedDocs.size());
+		logger.info("Found {} similar document on similarity Search",retrievedDocs.size());
 		
 		String content = retrievedDocs.stream()
 				.map(Document::getText)
@@ -38,7 +36,7 @@ public class DocumentRetrievalService {
 
 		String promptText = """
 				    Use the following documents to answer the question. If the question doesn't make sense, reply generically.
-
+					Also, try not to go way beyond the pdf.
 				    Documents:
 				    %s
 

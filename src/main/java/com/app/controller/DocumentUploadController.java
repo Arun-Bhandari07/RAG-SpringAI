@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.app.service.DocumentIngestionService;
-import com.app.service.OllamaService;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -17,7 +16,6 @@ public class DocumentUploadController {
 	private DocumentIngestionService ingestionService;
 	
 	public DocumentUploadController(DocumentIngestionService ingestionService) {
-		
 		this.ingestionService=ingestionService;
 	}
 	

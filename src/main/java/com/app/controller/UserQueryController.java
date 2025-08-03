@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.app.service.GeminiService;
-import com.app.service.OllamaService;
+import com.app.configurations.AIServiceProvider;
+import com.app.service.AIService;
 
 import jakarta.validation.constraints.NotBlank;
 import reactor.core.publisher.Flux;
@@ -16,18 +16,15 @@ import reactor.core.publisher.Flux;
 @RequestMapping("/api/v1/ask")
 public class UserQueryController {
 
-	private final OllamaService ollamaService;
-	private final GeminiService geminiService;
+	private AIServiceProvider aiServiceProvider;
 
-	public UserQueryController(OllamaService ollamaService
-			,GeminiService geminiService) {
-		this.ollamaService = ollamaService;
-		this.geminiService= geminiService;
+	public UserQueryController(AIServiceProvider aiServiceProvider) {
+		this.aiServiceProvider = aiServiceProvider;
 	}
 
 	@PostMapping(value = "", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<String> askQuestion(@RequestBody @NotBlank String question) {
-		return geminiService.askQuestion(question);
+		return aiServiceProvider.process("groq",question);
 
 	}
 }
