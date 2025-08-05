@@ -13,12 +13,12 @@ import reactor.core.publisher.Flux;
 public class AIServiceProvider {
 
 	@Autowired
-	private Map<String,AIService> aiServicesMap;
-	
-	public Flux<String> process (String provider,String prompt) {
-		AIService service = aiServicesMap.get(provider.toLowerCase()+"Service");
-		if(service==null) {
-			throw new IllegalArgumentException("AI Provider doesn't exitss"+provider.toLowerCase());
+	private Map<String, AIService> aiServicesMap;
+
+	public Flux<String> process(String provider, String prompt) {
+		AIService service = aiServicesMap.get(provider.toLowerCase() + "Service");
+		if (service == null) {
+			throw new IllegalArgumentException("AI Provider doesn't exists" + provider.toLowerCase());
 		}
 		return service.askQuestion(prompt);
 	}

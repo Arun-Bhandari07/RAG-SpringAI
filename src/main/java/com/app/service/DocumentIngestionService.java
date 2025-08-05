@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -27,9 +28,13 @@ public class DocumentIngestionService {
 	private final VectorStore vectorStore;
 
 	private final int MIN_CHARACTER_FOR_CHUNKING = 300;
+	
+	private SummarizationService summarizationService;
 
-	public DocumentIngestionService(VectorStore vectorStore) {
+	public DocumentIngestionService(VectorStore vectorStore
+			,SummarizationService summarizationService) {
 		this.vectorStore = vectorStore;
+		this.summarizationService=summarizationService;
 	}
 
 	/**
@@ -45,21 +50,26 @@ public class DocumentIngestionService {
 
 		try (InputStream inputStream = file.getInputStream()) {
 
+			//Parse the document
 			logger.info("Received multipart file :{}", file.getOriginalFilename());
 			InputStreamResource resource = new InputStreamResource(inputStream);
 			TikaDocumentReader documentReader = new TikaDocumentReader(resource);
 			List<Document> documents = documentReader.get();
 			logger.debug("Extracted {} raw documents from file", documents.size());
 
+			//Add filename as a metadata
 			List<Document> documentWithMetadata = documents.stream().map(doc -> {
 				Map<String, Object> metadata = new HashMap<>(doc.getMetadata());
 				metadata.put("source", file.getOriginalFilename());
 				return new Document(doc.getFormattedContent(), metadata);
 			}).collect(Collectors.toList());
 
+			//Chunk the document
 			List<Document> chunkedDocuments = chunkDocument(documentWithMetadata);
 			logger.debug("Received {} chunks from file", chunkedDocuments.size());
 
+			//Embed and store it to vector database
+			summarizationService.summarize(chunkedDocuments);
 			vectorStore.add(chunkedDocuments);
 			logger.info("Successfully added chunks to vector store");
 
@@ -78,7 +88,7 @@ public class DocumentIngestionService {
 	 */
 	public List<Document> chunkDocument(List<Document> documentWithMetadata) {
 		TokenTextSplitter splitter = TokenTextSplitter.builder()
-				.withChunkSize(512)
+				.withChunkSize(5000)
 				.build();
 		
 		List<Document> allChunks = new ArrayList<>();

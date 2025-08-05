@@ -34,7 +34,7 @@ public class DocumentRetrievalService {
 				.map(Document::getText)
 				.collect(Collectors.joining("\n\n"));
 
-		String promptText = """
+		String userMessage = """
 				    Use the following documents to answer the question. If the question doesn't make sense, reply generically.
 					Also, try not to go way beyond the pdf.
 				    Documents:
@@ -43,8 +43,8 @@ public class DocumentRetrievalService {
 				    Question: %s
 				"""
 				.formatted(content, userPrompt);
-
-		Prompt prompt = new Prompt(new UserMessage(promptText));
+	
+		Prompt prompt = new Prompt(new UserMessage(userMessage));
 		return prompt;
 	}
 	

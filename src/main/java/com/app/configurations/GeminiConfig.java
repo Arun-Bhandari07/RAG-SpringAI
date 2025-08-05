@@ -14,9 +14,7 @@ public class GeminiConfig {
 
 	@Bean
 	public Client client() {
-		return Client.builder()
-				.apiKey(geminiApiKey)
-				.build();
+		return Client.builder().apiKey(geminiApiKey).build();
 	}
 
 }

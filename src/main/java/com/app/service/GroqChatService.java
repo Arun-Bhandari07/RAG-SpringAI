@@ -27,8 +27,7 @@ public class GroqChatService implements AIService{
 	@Override
 	public Flux<String> askQuestion(String userPrompt) {
 		Prompt prompt = documentRetrievalService.retrieveContent(userPrompt);
-		return chatClient.prompt(prompt).stream().content();
-		
+		return chatClient.prompt(prompt).stream().content();	
 	}
 
 	
