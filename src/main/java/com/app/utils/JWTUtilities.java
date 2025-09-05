@@ -9,15 +9,17 @@ import java.util.function.Function;
 
 import javax.crypto.SecretKey;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.app.entities.User;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+@Component
 public class JWTUtilities {
 	
 	@Value("${jwt.secretKey}")
@@ -25,19 +27,17 @@ public class JWTUtilities {
 	
 	@Value("${jwt.expirationTime_InMinutes}")
 	private int expirationTimeInMinutes;
-
-	private static final Logger logger = LoggerFactory.getLogger(JWTUtilities.class);
 	
-	// Generate JWT key
-	public String generateJwtToken(String username) {
+	public String generateJwtToken(User user) {
 		Instant issuedAt = Instant.now();
 		Instant expireAt = issuedAt.plus(Duration.ofMinutes(expirationTimeInMinutes));
+		
 		Map<String,String> claims = new HashMap<>();
-		claims.put("user", username);
+		claims.put("name", user.getName());
 		claims.put("role", "USER_ROLE");
 		
 		String jws = Jwts.builder()
-				.subject(username)
+				.subject(String.valueOf(user.getId()))
 				.issuedAt(Date.from(issuedAt))
 				.expiration(Date.from(expireAt))
 				.claims(claims)
@@ -89,7 +89,7 @@ public class JWTUtilities {
 
 	//Get signing keys
 	public SecretKey getSigningKey() {
-		byte[] keyBytes = Decoders.BASE64URL.decode(jwtSecretKey);
+		byte[] keyBytes = Decoders.BASE64.decode(jwtSecretKey);
 		return 	Keys.hmacShaKeyFor(keyBytes);
 	}
 }

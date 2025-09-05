@@ -1,5 +1,6 @@
 package com.app.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,7 +25,7 @@ public class AuthController {
 	@PostMapping("/register")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
 		authService.registerUser(signUpRequest);
-		return ResponseEntity.ok("User Registered Successfully");
+		return ResponseEntity.status(HttpStatus.CREATED).body("User Registered Successfully");
 	}
 	
 	@PostMapping("/login")

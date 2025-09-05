@@ -2,12 +2,12 @@ package com.app.configurations;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,17 +22,23 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.app.service.CustomUserDetailsService;
 import com.app.utils.JWTAuthenticationFilter;
+import com.app.utils.OAuth2SuccessHandler;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
-@AllArgsConstructor
+@RequiredArgsConstructor
 @EnableWebSecurity
 public class SecurityConfig {
 	
-	private CustomUserDetailsService customUserDetailsService;
+	@Value("${app.frontend_url}")
+	private String frontendUrl;
 	
-	private JWTAuthenticationFilter jwtAuthenticationFilter;
+	private final CustomUserDetailsService customUserDetailsService;
+	
+	private final OAuth2SuccessHandler oauth2SuccessHandler;
+	
+	private final JWTAuthenticationFilter jwtAuthenticationFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,15 +46,19 @@ public class SecurityConfig {
 				.csrf(csrf->csrf.disable())
 				.cors(cors->cors.configurationSource(corsConfigurationSource()))
 				.authorizeHttpRequests(auth->auth
-						.requestMatchers("/login").permitAll()
-						.requestMatchers("/home").permitAll()
+						.requestMatchers("/public","/login","/home","/public").permitAll()
 						.requestMatchers("/upload").hasRole("USER")
+						.requestMatchers("/users").hasRole("USER")
+						.requestMatchers("/admin").hasRole("ADMIN")
 						.requestMatchers("/ask").hasRole("USER")
+						.requestMatchers("/private").authenticated()
 						.anyRequest().authenticated())
-				.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 				.authenticationProvider(authenticationProvider())
-				.oauth2Login(Customizer.withDefaults())
-				.formLogin(formLogin->formLogin.disable())
+				.oauth2Login(oauth2->
+					  oauth2.loginPage(frontendUrl+"/login")
+					  .successHandler(oauth2SuccessHandler)
+					  )
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();
 			
@@ -57,15 +67,14 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOriginPatterns(List.of("*"));
-		config.setAllowedHeaders(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+		config.setAllowedOrigins(List.of(frontendUrl));
+		config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));
 		config.setAllowCredentials(true);
 		
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", config);
-		return source;
-		
+		return source;	
 	}
 	
 	@Bean
@@ -86,4 +95,7 @@ public class SecurityConfig {
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
+	
+	
+	
 }

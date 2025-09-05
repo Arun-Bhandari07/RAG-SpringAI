@@ -9,11 +9,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.app.entities.User;
 
-import lombok.Data;
-
 
 public class CustomUserDetails implements UserDetails{
 	
+	
+	private static final long serialVersionUID = 1L;
 	
 	private User user;
 
@@ -22,7 +22,7 @@ public class CustomUserDetails implements UserDetails{
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-			return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+			return List.of(new SimpleGrantedAuthority(user.getRole().toString()));
 	}
 
 	@Override
@@ -32,7 +32,7 @@ public class CustomUserDetails implements UserDetails{
 
 	@Override
 	public String getUsername() {
-		return user.getUsername();
+		return user.getEmail();
 		
 	}
 
