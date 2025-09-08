@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OAuth2Utils {
 
+	
 	public RegistrationType getRegistrationType(String clientRegistrationId) {
 		return switch(clientRegistrationId.toLowerCase()) {
 		case "google" -> RegistrationType.GOOGLE;
