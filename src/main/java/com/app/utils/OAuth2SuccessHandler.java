@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -34,12 +35,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 	
 	private final UserRepository userRepo;
 	
-	private final AuthenticationService authService;
-	
+	private final ObjectMapper objectMapper;
+
 	private final OAuth2Utils oauth2Utils;
 	
-	private final ObjectMapper objectMapper;
-	
+	@Lazy
+	private  AuthenticationService authService;
+
 	
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,

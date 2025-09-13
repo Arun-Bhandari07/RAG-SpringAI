@@ -1,7 +1,6 @@
 package com.app.configurations;
 
 import java.util.Map;
-import java.util.UUID;
 
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +39,7 @@ public class AIServiceProvider {
 				.collectList()
 				.doOnNext(responses->{
 					String fullResponse = String.join(" ", responses);
-//					TODO 
-//					chatMemory.save(conversationId, List.of());
+
 				})
 				.subscribe();
 		return response;

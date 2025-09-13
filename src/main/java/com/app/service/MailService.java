@@ -29,11 +29,11 @@ public class MailService {
 
 	private final JavaMailSender javaMailSender;
 
-	private TokenVerificationService tokenService;
+	private final TokenVerificationService tokenService;
 
 	
 	public void sendVerificationEmail(String email) {
-		String token = tokenService.generateAndSaveVerificationToken(email, TokenType.EMAIL_VERIFICATION);
+		String token = tokenService.generateAndSaveVerificationToken(email, TokenType.SIGNUP_EMAIL_VERIFICATION);
 	    String link = frontendUrl + "/verify-email?token=" + token;
 	    String body = verificationEmailTemplate(link);
 	    sendEmail(email, "Email Verification", body, false);
@@ -51,15 +51,14 @@ public class MailService {
 	private void sendEmail(String to, String subject, String body, boolean isMultipart) {
 	    try {
 	        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-	        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, isMultipart);
-
+	        MimeMessageHelper helper;
+	        helper = new MimeMessageHelper(mimeMessage, isMultipart);
 	        helper.setFrom(orgMail);
-	        helper.setTo(to);
-	        helper.setSubject(subject);
-	        helper.setText(body, true);
-
-	        javaMailSender.send(mimeMessage);
-	        log.info("Email sent to {} with subject '{}'", to, subject);
+			helper.setTo(to);
+			helper.setSubject(subject);
+			helper.setText(body, true);
+			javaMailSender.send(mimeMessage);
+			 log.info("Email sent to {} with subject '{}'", to, subject);
 	    } catch (MessagingException ex) {
 	        log.error("Failed to send email to {} with subject '{}': {}", to, subject, ex.getMessage(), ex);
 	        throw new EmailSendException("Could not send email", ex);

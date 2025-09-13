@@ -23,9 +23,10 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
 	private final CustomUserDetailsService customUserDetailsService;
 	
-	public JWTAuthenticationFilter(CustomUserDetailsService customUserDetailsService) {
+	public JWTAuthenticationFilter(CustomUserDetailsService customUserDetailsService
+			,JWTUtilities jwtUtilities) {
 		this.customUserDetailsService=customUserDetailsService;
-		this.jwtUtilities=new JWTUtilities();
+		this.jwtUtilities= jwtUtilities;
 	}
 
 	@Override
@@ -34,6 +35,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
 		// Extract Authorization Header
 		String authHeader = request.getHeader("Authorization");
+		logger.info("AuthHeader:"+authHeader);
+		
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
 			filterChain.doFilter(request, response);
 			return;
@@ -41,7 +44,9 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
 		// Extract Bearer Token
 		String token = authHeader.substring(7);
-
+		
+		logger.info("Extracted JWT Token: "+token);
+		
 		// Check if the token is Valid
 		if (token != null && jwtUtilities.isTokenValid(token)) {
 			String username = jwtUtilities.extractUsername(token);

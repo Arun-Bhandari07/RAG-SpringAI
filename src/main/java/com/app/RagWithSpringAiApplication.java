@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @SpringBootApplication
 @EnableWebSecurity
 @EnableAsync
-@EnableAutoConfiguration(exclude = OpenAiEmbeddingAutoConfiguration.class)
+@EnableAutoConfiguration(exclude=OpenAiEmbeddingAutoConfiguration.class)
 public class RagWithSpringAiApplication {
 
 	public static void main(String[] args) {

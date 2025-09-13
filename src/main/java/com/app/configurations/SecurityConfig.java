@@ -20,6 +20,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.app.exception.CustomAccessDeniedException;
+import com.app.exception.CustomAuthenticationEntryPoint;
 import com.app.service.CustomUserDetailsService;
 import com.app.utils.JWTAuthenticationFilter;
 import com.app.utils.OAuth2SuccessHandler;
@@ -39,26 +41,28 @@ public class SecurityConfig {
 	private final OAuth2SuccessHandler oauth2SuccessHandler;
 	
 	private final JWTAuthenticationFilter jwtAuthenticationFilter;
+	
+	private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+	
+	private final CustomAccessDeniedException customAccessDeniedException;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		return http
+				.exceptionHandling(ex-> ex
+					.authenticationEntryPoint( customAuthenticationEntryPoint)   
+					.accessDeniedHandler(customAccessDeniedException))
 				.csrf(csrf->csrf.disable())
 				.cors(cors->cors.configurationSource(corsConfigurationSource()))
 				.authorizeHttpRequests(auth->auth
-						.requestMatchers("/public","/login","/home","/public").permitAll()
-						.requestMatchers("/upload").hasRole("USER")
-						.requestMatchers("/users").hasRole("USER")
-						.requestMatchers("/admin").hasRole("ADMIN")
-						.requestMatchers("/ask").hasRole("USER")
+						.requestMatchers("/public/**","/v1/auth/**").permitAll()
+						.requestMatchers("/upload","/users/**","api/v1/ask").permitAll()
+						.requestMatchers("/admin/**").hasRole("ADMIN")
 						.requestMatchers("/private").authenticated()
 						.anyRequest().authenticated())
 				.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 				.authenticationProvider(authenticationProvider())
-				.oauth2Login(oauth2->
-					  oauth2.loginPage(frontendUrl+"/login")
-					  .successHandler(oauth2SuccessHandler)
-					  )
+				.oauth2Login(oauth2->oauth2.successHandler(oauth2SuccessHandler))
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();
 			
@@ -96,6 +100,6 @@ public class SecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 	
-	
+
 	
 }

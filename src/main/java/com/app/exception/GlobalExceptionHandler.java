@@ -8,8 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -34,17 +35,18 @@ public class GlobalExceptionHandler {
 	
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex
-			,BindingResult bindingResult,WebRequest req){
+			,WebRequest req){
 		
 		logger.debug(ex.getLocalizedMessage());
-		
+		BindingResult bindingResult = ex.getBindingResult();
 		Map<String,String> errorsMap = new HashMap<>();
-		
-		if(bindingResult.hasErrors()) {
+
 			bindingResult.getFieldErrors()
 			.forEach(error-> 
 			errorsMap.put(error.getField(), error.getDefaultMessage()));
-		}
+			
+			logger.debug(errorsMap.toString());
+			
 		ApiErrorResponse response = new ApiErrorResponse(
 				"Invalid Fields Value",
 				HttpStatus.BAD_REQUEST.name(),
@@ -68,13 +70,24 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 	}
 	
-	
+	@ExceptionHandler(BadCredentialsException.class)
+	public ResponseEntity<ApiErrorResponse> handleBadCredentials(BadCredentialsException ex, WebRequest req) {
+	    	ApiErrorResponse res = new ApiErrorResponse(
+	    							ex.getMessage(),
+	    							HttpStatus.UNAUTHORIZED.name(),
+	    							HttpStatus.UNAUTHORIZED.value(),
+	    							req.getDescription(false).substring(4),
+	    							LocalDateTime.now()
+	    						);
+	    	return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res);
+	}
 	
 	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex,WebRequest req){
+		logger.error("Exception level error from : {}",ex.getMessage(),ex);
 			ApiErrorResponse response = new ApiErrorResponse(
-					ex.getMessage(),
+					"An error occured",
 					HttpStatus.INTERNAL_SERVER_ERROR.name(),
 					HttpStatus.INTERNAL_SERVER_ERROR.value(),
 					req.getDescription(false).substring(4),

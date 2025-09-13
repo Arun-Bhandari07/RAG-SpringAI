@@ -39,15 +39,15 @@ public class AuthenticationService {
 	private final UserRepository userRepo;
 
 	private final MailService mailService;
-	
-	private PasswordEncoder passwordEncoder;
-	
-	private VerificationTokenRepository verificationTokenRepo;
+
+	private final PasswordEncoder passwordEncoder;
+
+	private final VerificationTokenRepository verificationTokenRepo;
 
 	public void registerUser(SignUpRequest signUpReq) {
 		if (userRepo.existsByEmail(signUpReq.getEmail())) {
-			log.info("User already exists. Can't register for email{}", signUpReq.getEmail());
-			throw new BadCredentialsException("Email already registered");
+			log.info("User already exists. Can't register for email: {}", signUpReq.getEmail());
+			return;
 		}
 		User user = new User();
 		user.setName(signUpReq.getFullname());
@@ -55,6 +55,8 @@ public class AuthenticationService {
 		user.setRegType(RegistrationType.LOCAL);
 		user.setPassword(passwordEncoder.encode(signUpReq.getPassword()));
 		user.setRole(UserRole.ROLE_USER);
+		user.setCreated_at(LocalDateTime.now());
+		user.setEmailVerified(false);
 		user = userRepo.save(user);
 		log.info("Registered a user with id :{} and mail: {}", user.getId(), user.getEmail());
 		mailService.sendVerificationEmail(user.getEmail());
@@ -69,10 +71,10 @@ public class AuthenticationService {
 			CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
 			User user = userDetails.getUser();
 
-			if (!user.isEmailVerified()) {
-			    throw new BadCredentialsException("Email not verified. Please verify first.");
+			if (!user.isEmailVerified() && user.getRegType() == RegistrationType.LOCAL) {
+				throw new BadCredentialsException("Email not verified. Please verify first.");
 			}
-			
+
 			String jwtToken = jwtUtilities.generateJwtToken(user);
 			Date expiryTime = jwtUtilities.extractAllClaims(jwtToken).getExpiration();
 			Long expiryTimeInMillis = expiryTime.getTime();
@@ -87,50 +89,50 @@ public class AuthenticationService {
 	}
 
 	public void changePassword(ChangePasswordRequest changePasswordRequest) {
-		if(!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmPassword())){
+		if (!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmPassword())) {
 			throw new BadCredentialsException("Confirm password doesn't match");
 		}
 
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			if(!(authentication instanceof AnonymousAuthenticationToken)) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (!(authentication instanceof AnonymousAuthenticationToken)) {
 			CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-			
+
 			String email = userDetails.getUsername();
 			User user = userRepo.findByEmail(email)
-						.orElseThrow(()->new IllegalArgumentException("User doesn't exits with give email"));
-			 
-			if(!passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), user.getPassword())) {
+					.orElseThrow(() -> new IllegalArgumentException("User doesn't exits with give email"));
+
+			if (!passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), user.getPassword())) {
 				throw new IllegalArgumentException("Current password is incorrect");
 			}
-			
+
 			user.setPassword(passwordEncoder.encode(changePasswordRequest.getConfirmPassword()));
 			userRepo.save(user);
-			}
+			log.info("User with id {} changed password at {}", user.getId(), LocalDateTime.now());
+		}
 	}
 
 	public void resetForgottenPassword(String token, String newPassword, String confirmPassword) {
-	    if (!newPassword.equals(confirmPassword)) {
-	        throw new IllegalArgumentException("Passwords do not match");
-	    }
+		if (!newPassword.equals(confirmPassword)) {
+			throw new IllegalArgumentException("Passwords do not match");
+		}
 
-	    VerificationToken verificationRecord = verificationTokenRepo.findByToken(token)
-	        .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
+		VerificationToken verificationRecord = verificationTokenRepo.findByToken(token)
+				.orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
 
-	    if (verificationRecord.getExpiresAt().isBefore(LocalDateTime.now()) || verificationRecord.isUsed()) {
-	        throw new IllegalArgumentException("Token is expired or already used");
-	    }
+		if (verificationRecord.getExpiresAt().isBefore(LocalDateTime.now()) || verificationRecord.isUsed()) {
+			throw new IllegalArgumentException("Token is expired or already used");
+		}
 
-	    User user = verificationRecord.getUser();
-	    user.setPassword(passwordEncoder.encode(newPassword));
-	    userRepo.save(user);
+		User user = verificationRecord.getUser();
+		user.setPassword(passwordEncoder.encode(newPassword));
+		userRepo.save(user);
 
-	    verificationRecord.setUsed(true);
-	    verificationTokenRepo.save(verificationRecord);
+		verificationRecord.setUsed(true);
+		verificationTokenRepo.save(verificationRecord);
 
-	    log.info("Password reset for user: {}", user.getEmail());
+		log.info("Password reset for user: {}", user.getEmail());
 	}
 
-	
 	public AuthResponse handleOAuth2Login(User user) {
 		String jwtToken = jwtUtilities.generateJwtToken(user);
 		String email = user.getEmail();

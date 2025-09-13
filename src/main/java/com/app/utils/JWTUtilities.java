@@ -23,7 +23,7 @@ import io.jsonwebtoken.security.Keys;
 public class JWTUtilities {
 	
 	@Value("${jwt.secretKey}")
-	private  String jwtSecretKey ;
+	private  String jwtSecretKey;
 	
 	@Value("${jwt.expirationTime_InMinutes}")
 	private int expirationTimeInMinutes;
@@ -37,7 +37,7 @@ public class JWTUtilities {
 		claims.put("role", "USER_ROLE");
 		
 		String jws = Jwts.builder()
-				.subject(String.valueOf(user.getId()))
+				.subject(user.getEmail())
 				.issuedAt(Date.from(issuedAt))
 				.expiration(Date.from(expireAt))
 				.claims(claims)
