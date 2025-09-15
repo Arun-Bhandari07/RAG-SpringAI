@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -82,6 +83,18 @@ public class GlobalExceptionHandler {
 	    	return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res);
 	}
 	
+	@ExceptionHandler(NoHandlerFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handleNotFound(NoHandlerFoundException ex, WebRequest req) {
+	    ApiErrorResponse res = new ApiErrorResponse(
+	            "Route not found: " + ex.getRequestURL(),
+	            HttpStatus.NOT_FOUND.name(),
+	            HttpStatus.NOT_FOUND.value(),
+	            req.getDescription(false).substring(4),
+	            LocalDateTime.now()
+	    );
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+	}
+
 	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex,WebRequest req){

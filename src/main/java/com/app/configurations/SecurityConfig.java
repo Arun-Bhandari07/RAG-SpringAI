@@ -56,9 +56,8 @@ public class SecurityConfig {
 				.cors(cors->cors.configurationSource(corsConfigurationSource()))
 				.authorizeHttpRequests(auth->auth
 						.requestMatchers("/public/**","/v1/auth/**").permitAll()
-						.requestMatchers("/upload","/users/**","api/v1/ask").permitAll()
+						.requestMatchers("/upload","/users/**","/query/v1/**").permitAll()
 						.requestMatchers("/admin/**").hasRole("ADMIN")
-						.requestMatchers("/private").authenticated()
 						.anyRequest().authenticated())
 				.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 				.authenticationProvider(authenticationProvider())

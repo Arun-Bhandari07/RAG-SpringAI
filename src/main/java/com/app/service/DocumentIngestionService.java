@@ -73,7 +73,7 @@ public class DocumentIngestionService {
 			logger.info("Successfully added chunks to vector store");
 
 		} catch (Exception ex) {
-			logger.error("Failed to process document: {}", file.getOriginalFilename(), ex.getCause());
+			logger.error("Failed to process document: {}", file.getOriginalFilename(), ex.getCause(),ex);
 			throw new DocumentProcessingException("Could not process the file:" + file.getOriginalFilename(), ex);
 		}
 	}

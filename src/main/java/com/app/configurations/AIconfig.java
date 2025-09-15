@@ -1,13 +1,14 @@
 package com.app.configurations;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class AIconfig {
@@ -30,9 +31,9 @@ public class AIconfig {
 	@Value("${groq.api.base_url}")
 	private String groqBaseUrl;
 
-
+	@ConditionalOnProperty(name="ai.provider",havingValue="gemini")
 	@Bean("geminiChatClient")
-	public ChatClient geminiChatClient() {
+	public ChatClient geminiChatClient(ChatMemory chatMemory) {
 		OpenAiApi geminiApi = OpenAiApi.builder()
 				.apiKey(geminiApiKey)
 				.baseUrl(geminiBaseUrl)
@@ -44,13 +45,16 @@ public class AIconfig {
 				.openAiApi(geminiApi)
 				.defaultOptions(geminiChatOptions)
 				.build();
-		return ChatClient.builder(geminiChatModel).build();
+		
+		return ChatClient
+				.builder(geminiChatModel)
+				.build();
 
 	}
 
-	@Primary
+	@ConditionalOnProperty(name="ai.provider",havingValue="groq")
 	@Bean("groqChatClient")
-	public ChatClient groqChatClient() {
+	public ChatClient groqChatClient(ChatMemory chatMemory) {
 		OpenAiApi groqApi = OpenAiApi.builder()
 				.apiKey(groqApiKey)
 				.baseUrl(groqBaseUrl)
@@ -64,7 +68,12 @@ public class AIconfig {
 				.openAiApi(groqApi)
 				.defaultOptions(groqChatOptions)
 				.build();
-		return ChatClient.builder(groqChatModel).build();
+				
+		return ChatClient
+				.builder(groqChatModel)
+				.build();
 	}
+	
+
 
 }
