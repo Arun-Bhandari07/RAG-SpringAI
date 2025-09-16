@@ -15,56 +15,54 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
-	private  JWTUtilities jwtUtilities;
+	private final JWTUtilities jwtUtilities;
 
 	private final CustomUserDetailsService customUserDetailsService;
-	
-	public JWTAuthenticationFilter(CustomUserDetailsService customUserDetailsService
-			,JWTUtilities jwtUtilities) {
-		this.customUserDetailsService=customUserDetailsService;
-		this.jwtUtilities= jwtUtilities;
-	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-
-		// Extract Authorization Header
-		String authHeader = request.getHeader("Authorization");
-		logger.info("AuthHeader:"+authHeader);
-		
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-
-		// Extract Bearer Token
-		String token = authHeader.substring(7);
-		
-		logger.info("Extracted JWT Token: "+token);
-		
-		// Check if the token is Valid
-		if (token != null && jwtUtilities.isTokenValid(token)) {
-			String username = jwtUtilities.extractUsername(token);
-
-			if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-				UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-				UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
-						null, userDetails.getAuthorities());
-				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-				// Set the user in security context
-				SecurityContextHolder.getContext().setAuthentication(authToken);
-
+		log.error("Requested URI: {}",request.getRequestURI());
+			// Extract Authorization Header
+			String authHeader = request.getHeader("Authorization");
+			logger.info("AuthHeader:"+authHeader);
+			
+			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+				filterChain.doFilter(request, response);
+				return;
 			}
-			// Continue filter chain
+			// Extract Bearer Token
+			String token = authHeader.substring(7);
+			
+			logger.info("Extracted JWT Token: "+token);
+		
+				// Check if the token is Valid
+				if (token != null && jwtUtilities.isTokenValid(token)) {
+					String username = jwtUtilities.extractUsername(token);
+
+					if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+						UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+						UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
+								null, userDetails.getAuthorities());
+						authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+						// Set the user in security context
+						SecurityContextHolder.getContext().setAuthentication(authToken);
+					}
+					// Continue filter chain
+				}
+				filterChain.doFilter(request, response);
+		
 		}
-		filterChain.doFilter(request, response);
 
+		
+		
 	}
-
-}

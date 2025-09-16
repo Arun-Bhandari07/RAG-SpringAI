@@ -19,7 +19,7 @@ public class UserQueryController {
 
 	private final AIServiceImpl chatService;
 	
-	@PostMapping(value = "/ask")
+	@PostMapping(value ="/ask")
 	public Flux<String> askQuestion(@RequestBody Map<String,String> request) {
 		String extractedQuestion = request.getOrDefault("question","");
 		Flux<String> fluxResponse = chatService.askQuestion(extractedQuestion);

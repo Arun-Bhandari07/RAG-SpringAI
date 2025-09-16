@@ -56,12 +56,13 @@ public class SecurityConfig {
 				.cors(cors->cors.configurationSource(corsConfigurationSource()))
 				.authorizeHttpRequests(auth->auth
 						.requestMatchers("/public/**","/v1/auth/**").permitAll()
-						.requestMatchers("/upload","/users/**","/query/v1/**").permitAll()
+						.requestMatchers("/upload","/users/**","/query/v1/**").hasAnyRole("USER","ADMIN")
 						.requestMatchers("/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated())
-				.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+				.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider())
 				.oauth2Login(oauth2->oauth2.successHandler(oauth2SuccessHandler))
+				.formLogin(formlogin->formlogin.disable())
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();
 			
@@ -70,7 +71,7 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(List.of(frontendUrl));
+		config.setAllowedOrigins(List.of(frontendUrl,"http://127.0.0.1:5500"));
 		config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));
 		config.setAllowCredentials(true);

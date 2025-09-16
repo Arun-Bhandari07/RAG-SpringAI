@@ -4,12 +4,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import com.app.entities.User;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
@@ -54,11 +59,18 @@ public class AIServiceImpl implements AIService{
 				.messages(messages)
 				.build();
 		
+		CustomUserDetails userDetails = (CustomUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = userDetails.getUser();
+		String userId = Long.toString(user.getId());
+		System.out.println("User Requested with : "+userId +"and username "+user.getName());
+		
 		//Make a call to LLM
 		return chatClient
 				.prompt(finalPrompt)
+				.advisors(advisorSpec->advisorSpec.param(ChatMemory.CONVERSATION_ID,userId))
 				.stream()
 				.content()
 				.onErrorReturn("Service unavailable now, please try again later");	
 	}
 }
+

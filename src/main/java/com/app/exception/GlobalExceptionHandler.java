@@ -98,7 +98,7 @@ public class GlobalExceptionHandler {
 	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex,WebRequest req){
-		logger.error("Exception level error from : {}",ex.getMessage(),ex);
+		logger.error("Exception  from : {}",ex.getMessage(),ex);
 			ApiErrorResponse response = new ApiErrorResponse(
 					"An error occured",
 					HttpStatus.INTERNAL_SERVER_ERROR.name(),

@@ -1,7 +1,10 @@
 package com.app.configurations;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -48,6 +51,7 @@ public class AIconfig {
 		
 		return ChatClient
 				.builder(geminiChatModel)
+				.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
 				.build();
 
 	}
@@ -69,11 +73,20 @@ public class AIconfig {
 				.defaultOptions(groqChatOptions)
 				.build();
 				
+		
 		return ChatClient
 				.builder(groqChatModel)
+				.defaultAdvisors( MessageChatMemoryAdvisor.builder(chatMemory).build())
 				.build();
 	}
 	
 
+	@Bean
+	public ChatMemory chatMemory(JdbcChatMemoryRepository jdbcChatMemoryRepository) {
+		return MessageWindowChatMemory.builder()
+				.chatMemoryRepository(jdbcChatMemoryRepository)
+				.build();
+		
+	}
 
 }

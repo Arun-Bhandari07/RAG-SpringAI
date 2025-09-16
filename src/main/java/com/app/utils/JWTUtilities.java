@@ -10,6 +10,7 @@ import java.util.function.Function;
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 
 import com.app.entities.User;
@@ -18,8 +19,10 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 public class JWTUtilities {
 	
 	@Value("${jwt.secretKey}")
@@ -49,11 +52,16 @@ public class JWTUtilities {
 	
 	// Extract payload
 	public Claims extractAllClaims(String jwtToken) {
+		try {
 			return Jwts.parser()
 					.verifyWith(getSigningKey())
 					.build()
 					.parseSignedClaims(jwtToken)
 					.getPayload();
+		}catch(JwtException e) {
+			log.error("Error with JWT : {}",e.getMessage());
+			throw new RuntimeException("Invalid JWT",e);
+		}
 	
 	}
 	
