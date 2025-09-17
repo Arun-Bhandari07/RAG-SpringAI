@@ -62,7 +62,7 @@ public class AIServiceImpl implements AIService{
 		CustomUserDetails userDetails = (CustomUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		User user = userDetails.getUser();
 		String userId = Long.toString(user.getId());
-		System.out.println("User Requested with : "+userId +"and username "+user.getName());
+		
 		
 		//Make a call to LLM
 		return chatClient

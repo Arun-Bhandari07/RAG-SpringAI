@@ -21,8 +21,8 @@ public class DocumentUploadController {
 	
 	@PostMapping("/upload")
 	public ResponseEntity<String> uploadPdf(@RequestParam("file") MultipartFile file) {
-		ingestionService.processAndStorepdf(file);
-		return ResponseEntity.ok().body("PDF uploaded successfully");
+		ingestionService.processAndStoreFile(file);
+		return ResponseEntity.ok().body("File uploaded successfully");
 	}
 	
 }

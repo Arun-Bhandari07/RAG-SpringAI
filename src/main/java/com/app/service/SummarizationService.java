@@ -3,6 +3,7 @@ package com.app.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
@@ -10,12 +11,16 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.BatchingStrategy;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptions;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -27,13 +32,15 @@ import smile.math.MathEx;
 public class SummarizationService {
 
 	private static final Logger logger = LoggerFactory.getLogger(SummarizationService.class);
+	
+	@Value("classpath:/prompts/summarization-message.st")
+	private Resource summarizationTemplateResource;
 
 	private final EmbeddingModel embeddingModel;
 	private final ChatClient chatClient;
 	private final JdbcTemplate jdbcTemplate;
 
-	public record ClusterChunk(int clusterId, Document doc) {
-	}
+	public record ClusterChunk(int clusterId, Document doc) {}
 
 	public SummarizationService(EmbeddingModel embeddingModel, ChatClient chatClient, JdbcTemplate jdbcTemplate) {
 		this.embeddingModel = embeddingModel;
@@ -57,6 +64,19 @@ public class SummarizationService {
 			return;
 		}
 
+	    // If there's only 1 chunk, summarize it directly without clustering
+	    if (chunkedDocuments.size() == 1) {
+	        String cleanedInput = cleanContent(chunkedDocuments.get(0).toString());
+	        if (cleanedInput.trim().length() < 100) {
+	            logger.info("Skipping trivial chunk: {}", cleanedInput);
+	            return;
+	        }
+	        String summary = summarize(cleanedInput);
+	        logger.info("Single chunk summary:\n{}", summary);
+	        saveDocumentSummary(summary, (String)chunkedDocuments.get(0).getMetadata().get("source"));
+	        return;
+	    }
+		
 		// Embed Chunks
 		List<float[]> embeddings = embedDocuments(chunkedDocuments);
 
@@ -97,7 +117,12 @@ public class SummarizationService {
 			return doubleArray;
 		}).toArray(double[][]::new);
 
-		int k = Math.min(3, vectors.length);
+		if(vectors.length<2) {
+			logger.warn("Only 1 vector could be formed from document, skipping clustering");
+			
+			
+		}
+		int k = Math.min(2, vectors.length);
 		CentroidClustering<double[], double[]> clustering = KMeans.fit(vectors,
 				new smile.clustering.Clustering.Options(k, 100));
 
@@ -171,21 +196,16 @@ public class SummarizationService {
 
 
 	public String summarize(String input) {
-		String prompt = """
-				You are a document summarization assistant.
-				Given the following EXTRACTED TEXT from a document, summarize the key points.
-				Ignore formatting like bullet points, markdown syntax (** * # etc.), and headings.
-				Summarize ONLY what's given without expecting more content.
-
-				EXTRACTED TEXT:
-				---
-				%s
-				---
-
-				Provide a clean summary of the content above.
-				""".formatted(input);
-
-		return chatClient.prompt(prompt).call().content();
+		PromptTemplate summarizationTemplate = PromptTemplate.builder()
+				.resource(summarizationTemplateResource)
+				.build();
+		
+		Prompt summarizationPrompt = summarizationTemplate.create(Map.of("extractedText",input));
+		
+		return chatClient
+				.prompt(summarizationPrompt)
+				.call()
+				.content();
 	}
 
 	public String cleanContent(String content) {

@@ -14,9 +14,12 @@ import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.app.entities.User;
 import com.app.exception.DocumentProcessingException;
 
 @Service
@@ -45,7 +48,10 @@ public class DocumentIngestionService {
 	 * @throws DocumentProcessingException if processing fails
 	 * 
 	 */
-	public void processAndStorepdf(MultipartFile file) {
+	public void processAndStoreFile(MultipartFile file) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		CustomUserDetails	userDetails   = (CustomUserDetails) authentication.getPrincipal();
+		User user = userDetails.getUser();
 
 		try (InputStream inputStream = file.getInputStream()) {
 
@@ -60,6 +66,7 @@ public class DocumentIngestionService {
 			List<Document> documentWithMetadata = documents.stream().map(doc -> {
 				Map<String, Object> metadata = new HashMap<>(doc.getMetadata());
 				metadata.put("source", file.getOriginalFilename());
+				metadata.put("userId",  String.valueOf(user.getId()));
 				return new Document(doc.getFormattedContent(), metadata);
 			}).collect(Collectors.toList());
 
